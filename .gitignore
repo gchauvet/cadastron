@@ -1,0 +1,20 @@
+# Scans sources et sorties générées (volumineux, non versionnés)
+images/
+output/
+
+# Corpus d'entraînement et checkpoints (volumineux, téléchargés/générés)
+training/timeuscorpus/
+training/models/
+training/*.log
+training/train_log.txt
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Divers
+.DS_Store
+Thumbs.db
+.tokensave/
