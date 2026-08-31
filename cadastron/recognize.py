@@ -23,7 +23,7 @@ class Recognizer:
 
     def recognize(self, line_image: np.ndarray) -> str:
         from kraken import rpred
-        from kraken.containers import BaselineLine
+        from kraken.containers import BaselineLine, Segmentation
 
         pil_image = (
             Image.fromarray(line_image[:, :, ::-1])
@@ -31,9 +31,22 @@ class Recognizer:
             else Image.fromarray(line_image)
         )
         h, w = line_image.shape[:2]
-        baseline = [[0, h - 1], [w, h - 1]]
-        boundary = [[0, 0], [w, 0], [w, h], [0, h]]
-        line = BaselineLine(id="line", baseline=baseline, boundary=boundary)
+        # La ligne est deja recadree : sa baseline est le bas de l'image et
+        # son polygone englobant est l'image entiere.
+        line = BaselineLine(
+            id="line",
+            baseline=[(0, h - 1), (w - 1, h - 1)],
+            boundary=[(0, 0), (w - 1, 0), (w - 1, h - 1), (0, h - 1)],
+        )
+        segmentation = Segmentation(
+            type="baselines",
+            imagename="line",
+            text_direction="horizontal-lr",
+            script_detection=False,
+            lines=[line],
+            regions={},
+            line_orders=[],
+        )
 
-        predictions = list(rpred.rpred(self.model, pil_image, [line]))
+        predictions = list(rpred.rpred(self.model, pil_image, segmentation))
         return predictions[0].prediction if predictions else ""

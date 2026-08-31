@@ -7,6 +7,12 @@ training/timeuscorpus/
 training/models/
 training/*.log
 training/train_log.txt
+training/finetune_log.txt
+
+# Jeu d'entraînement du fine-tuning : les transcriptions manuelles (.gt.txt)
+# sont versionnées — c'est du travail humain irremplaçable — mais pas les
+# images de lignes, que le pipeline régénère.
+training/cadastre_gt/*.png
 
 # Python
 __pycache__/
