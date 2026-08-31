@@ -129,6 +129,10 @@ python training/prepare_timeus.py          # une seule fois
 python training/eval_model.py --device cuda:0 --model training/models/cadastre/best_0.9xxx.safetensors
 ```
 
+> **[ENTRAINEMENT.md](ENTRAINEMENT.md)** — ce que mesure réellement chaque étape,
+> et deux décisions à prendre avant de lancer la saisie : l'étendue de
+> l'échantillon transcrit, et la façon de réserver un jeu de validation honnête.
+
 `ketos` écrit ses sorties dans le **répertoire** `training/models/cadastre/` : un
 `checkpoint_<époque>-<précision>.ckpt` par époque, et le meilleur modèle sous la
 forme `best_<précision>.safetensors` — c'est ce dernier fichier qu'on passe à
