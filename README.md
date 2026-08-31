@@ -22,18 +22,28 @@ Pour chaque scan (`images/*.jpg`) :
 
 1. **Découpage** — détection automatique de la gouttière de reliure et séparation en deux pages physiques (en mémoire, aucun fichier intermédiaire écrit sur disque).
 2. **Redressement** — correction de l'inclinaison de chaque page (`deskew`).
-3. **Détection de la grille imprimée** — repérage automatique des 14 colonnes du gabarit à partir des traits imprimés (pas de découpage naïf, calé sur le contenu réel de chaque page).
+3. **Détection de la grille imprimée** — repérage automatique des 15 colonnes du gabarit à partir des traits imprimés (pas de découpage naïf, calé sur le contenu réel de chaque page). Une page dont la grille n'est pas reconnue est **ignorée et signalée**, jamais forcée dans le gabarit.
 4. **Segmentation des lignes** — détection des lignes manuscrites avec [Kraken](https://kraken.re/) (`blla`).
 5. **Regroupement en lignes de tableau** — association des segments détectés aux bonnes colonnes/lignes de la grille.
 6. **Reconnaissance (optionnelle)** — transcription automatique via un modèle Kraken entraîné (voir [Entraînement du modèle](#entraînement-du-modèle) ci-dessous) ; en son absence, les images de chaque ligne sont conservées pour transcription manuelle ou entraînement futur.
-7. **Export ODS** — écriture d'un classeur `output/cadastron.ods` avec un onglet par page (~380 pages attendues).
+7. **Export ODS** — écriture d'un classeur `output/cadastron.ods` avec un onglet par page reconnue.
+
+### Composition du volume
+
+Le volume n'est pas homogène : il réunit plusieurs formulaires imprimés différents.
+Seule la **matrice des propriétés foncières** (15 colonnes, du scan 2 au scan ~200
+environ) correspond au gabarit décrit dans `config.py`. Les autres pages —
+*tableau de classement / application du tarif* à partir du scan ~200, édition plus
+ancienne de la matrice au scan 1, pages de résumé sans tableau — sont détectées
+comme non conformes et ignorées, avec la liste des pages concernées en fin
+d'exécution. Les traiter demanderait un gabarit supplémentaire par formulaire.
 
 ## Structure du projet
 
 ```
 cadastron/
 ├── cadastron/            # package principal
-│   ├── config.py         # schéma des 14 colonnes du gabarit
+│   ├── config.py         # schéma des 15 colonnes du gabarit
 │   ├── gutter.py          # détection de la gouttière / découpage en mémoire
 │   ├── preprocess.py      # redressement, binarisation
 │   ├── columns.py         # détection de la grille de colonnes imprimée
@@ -130,14 +140,16 @@ Sous Windows, `training/run_training.bat` lance l'étape 4 dans une console déd
 
 - Transcrire **exactement** ce qui est écrit : ni correction d'orthographe, ni développement des abréviations.
 - Le signe **ditto** <img src="repetita.png" alt="signe ditto manuscrit" height="28"> — qui reprend la valeur de la cellule **au-dessus dans la même colonne**, et non la ligne entière — se note `/` et se laisse tel quel. Sa résolution est un post-traitement, colonne par colonne ; le modèle, lui, doit apprendre à reconnaître le glyphe.
-- Laisser le fichier vide si la ligne est illisible : elle est alors exclue de l'entraînement.
+- **Une image = une ligne.** Les rognages étant rectangulaires, ils empiètent souvent sur les lignes voisines : un mot coupé en deux en bordure haute ou basse appartient à la ligne d'à côté, il ne se transcrit **pas**. Transcrire ces fragments apprendrait au modèle à produire du texte pour de l'encre hors de sa ligne.
+- Laisser le fichier vide si la ligne est illisible, ou si aucune ligne ne s'y impose clairement (deux lignes également présentes, aucune centrée) : elle est alors exclue de l'entraînement. Une ligne écartée coûte moins cher qu'une ligne mal alignée.
 
 Le fine-tuning conserve l'alphabet de McCATMuS et y ajoute les caractères propres au cadastre (`ketos --resize union`), afin de ne pas détruire le transfert d'apprentissage.
 
 ## État d'avancement
 
 - [x] Découpage automatique de la gouttière et des pages
-- [x] Détection automatique de la grille des 14 colonnes (validée sur scans réels)
+- [x] Détection automatique de la grille des 15 colonnes de la matrice (validée sur scans réels)
+- [ ] Gabarits des autres formulaires du volume (tableau de classement / application du tarif, à partir du scan ~200)
 - [x] Export ODS multi-onglets
 - [x] Segmentation des lignes manuscrites (Kraken)
 - [x] Reconnaissance branchée de bout en bout (`--rec-model`, API Kraken 7)

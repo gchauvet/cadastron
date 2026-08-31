@@ -65,10 +65,15 @@ def process_page(
     lines_dir: Path,
     seg_model: str | None,
     rec_model: str | None,
-) -> list[dict[int, str]]:
+) -> list[dict[int, str]] | None:
     page_img = deskew(page_img)
     binary = binarize(page_img)
     boundaries = detect_column_boundaries(binary, page_img.shape[1])
+    if boundaries is None:
+        # Not a matrice page: another printed form, a summary page, or a scan
+        # too damaged to fit. Better skipped than transcribed against a grid
+        # that does not describe it.
+        return None
 
     lines = segment_lines(page_img, seg_model)
     rows = group_into_rows(lines, boundaries)
@@ -131,6 +136,7 @@ def main() -> None:
 
     doc = new_document()
     sheets_written = 0
+    skipped: list[str] = []
 
     for scan_path in scans:
         log.info("Traitement de %s", scan_path.name)
@@ -148,11 +154,18 @@ def main() -> None:
             except RuntimeError as exc:
                 log.error("%s: %s", sheet_name, exc)
                 return
+            if rows is None:
+                log.warning("%s: grille du tableau non reconnue, page ignoree", sheet_name)
+                skipped.append(sheet_name)
+                continue
             add_page_sheet(doc, sheet_name, rows)
             sheets_written += 1
 
     save(doc, str(output_path))
     log.info("ODS ecrit: %s (%d feuilles)", output_path, sheets_written)
+    if skipped:
+        log.warning("%d pages ignorees (grille non reconnue): %s",
+                    len(skipped), ", ".join(skipped))
 
 
 if __name__ == "__main__":
