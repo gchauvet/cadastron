@@ -65,14 +65,12 @@ Les cellules de l'ODS se remplissent automatiquement.
 
 ---
 
-## Deux décisions à prendre avant la saisie
+## L'échantillon : comment il a été constitué
 
-### L'échantillon actuel est trop étroit
-
-Les 1393 rognages disponibles viennent des **scans 1 à 4** — sept pages, soit
-environ 200 rognages par page. Probablement une ou deux mains, une seule encre,
-un seul état de conservation. Un modèle entraîné là-dessus lira très bien ces
-sept pages et nettement moins bien les ~200 autres pages de matrice du volume.
+Le premier lot disponible — 1393 rognages — venait des **scans 1 à 4**, sept
+pages seulement. Probablement une ou deux mains, une seule encre, un seul état de
+conservation. Un modèle entraîné là-dessus aurait très bien lu ces sept pages et
+nettement moins bien les ~200 autres pages de matrice du volume.
 
 Le principe est constant en apprentissage automatique :
 
@@ -117,7 +115,33 @@ La sélection est déterministe : relancer le script avec le même plafond redon
 exactement les mêmes fichiers, et le relancer avec un plafond plus élevé ajoute
 des lignes sans jamais toucher aux transcriptions déjà saisies.
 
-### La précision annoncée par `ketos` sera optimiste
+### Ce que le passage a réellement donné
+
+`--stride 8` a retenu 48 scans sur 384, soit 96 pages, dont **47 exploitables** :
+
+| Pages | Sort |
+|---|---|
+| 47 | retenues, écrites dans l'ODS |
+| 46 | tableau de classement (scans 201 à 377) — rejet attendu |
+| 1 | `1_a`, édition ancienne de la matrice |
+| 2 | `41_a` et `41_b` — **seules vraies pertes**, grille non reconnue |
+
+Sur les 50 pages de matrice échantillonnées, 47 sont donc exploitables : 6 % de
+perte, en deçà des 8 % attendus. Elles s'étalent des scans 1 à 193, c'est-à-dire
+sur toute l'étendue de la matrice.
+
+Avec les six pages du premier passage, le dossier de saisie compte **53 pages**
+et **2 121 lignes** (40 par page, plus une transcription antérieure conservée) —
+dans la fourchette visée.
+
+À noter : la moitié du balayage (23 scans sur 48) est tombée dans le tableau de
+classement, intégralement rejeté. Sans conséquence ici puisque la cible est
+atteinte, mais s'il fallait un jour davantage de matrice, mieux vaudrait un pas
+plus serré borné aux scans 1 à 200.
+
+---
+
+## La décision qui reste : la précision annoncée par `ketos` sera optimiste
 
 `finetune_cadastre.py` ne passe ni `-p/--partition` ni `-e/--evaluation-data`.
 `ketos` découpe donc lui-même une fraction des lignes au hasard pour valider, et
