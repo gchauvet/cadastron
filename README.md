@@ -118,7 +118,7 @@ python -m cadastron.pipeline
 python training/prepare_finetune.py
 
 # 3. Transcrire à la main les lignes dans training/cadastre_gt/*.gt.txt
-#    (suivre l'avancement)
+#    (voir TRANSCRIPTION.md pour les regles, puis suivre l'avancement)
 python training/prepare_finetune.py --status
 
 # 4. Fine-tuner McCATMuS sur ces transcriptions
@@ -137,6 +137,8 @@ forme `best_<précision>.safetensors` — c'est ce dernier fichier qu'on passe �
 Sous Windows, `training/run_training.bat` lance l'étape 4 dans une console dédiée qui survit à la fermeture de l'éditeur, en archivant la sortie dans `training/finetune_log.txt`.
 
 ### Conventions de transcription
+
+> **[TRANSCRIPTION.md](TRANSCRIPTION.md)** — notice illustrée à remettre aux bénévoles, avec des exemples réels de chaque cas. Le résumé ci-dessous en reprend les règles.
 
 - Transcrire **exactement** ce qui est écrit : ni correction d'orthographe, ni développement des abréviations.
 - Le signe **ditto** <img src="repetita.png" alt="signe ditto manuscrit" height="28"> — qui reprend la valeur de la cellule **au-dessus dans la même colonne**, et non la ligne entière — se note `/` et se laisse tel quel. Sa résolution est un post-traitement, colonne par colonne ; le modèle, lui, doit apprendre à reconnaître le glyphe.
