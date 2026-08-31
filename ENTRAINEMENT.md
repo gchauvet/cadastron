@@ -21,10 +21,11 @@ milliers de fichiers laissés vides sont ignorés sans aucun risque, ce qui rend
 la consigne « dans le doute, laissez vide » sûre par construction. Il refuse de
 démarrer sous 100 lignes (`--min-lines`).
 
-Il lance ensuite :
+Il met de côté les pages de validation (voir plus bas), puis lance :
 
 ```
-ketos train -f path -i <McCATMuS> --resize union -B 8 -o training/models/cadastre <lignes...>
+ketos train -f path -i <McCATMuS> --resize union -B 8 -o training/models/cadastre \
+    -e training/models/validation_lines.txt <lignes d'entrainement...>
 ```
 
 `--resize union` conserve l'alphabet de McCATMuS et y ajoute les caractères
@@ -141,18 +142,38 @@ plus serré borné aux scans 1 à 200.
 
 ---
 
-## La décision qui reste : la précision annoncée par `ketos` sera optimiste
+## Le jeu de validation : quatre pages mises de côté
 
-`finetune_cadastre.py` ne passe ni `-p/--partition` ni `-e/--evaluation-data`.
-`ketos` découpe donc lui-même une fraction des lignes au hasard pour valider, et
-ces lignes sortent **des mêmes pages** que celles d'entraînement.
+Laissé à lui-même, `ketos` découpe une fraction des lignes **au hasard** pour
+valider. Ces lignes sortent alors des mêmes pages que celles d'entraînement, et
+le `best_0.97` affiché mesure surtout la capacité du modèle à relire des pages
+qu'il a déjà vues — pas à lire une page nouvelle, qui est la seule chose qui
+compte ici. Deux lignes voisines partagent la main, l'encre et l'état du papier :
+tirées au hasard, elles ne valident rien.
 
-Le `best_0.97` affiché mesurera surtout la capacité du modèle à relire des pages
-qu'il a déjà vues — pas sa capacité à lire une page nouvelle, qui est la seule
-chose qui compte ici.
+Quatre **pages entières** sont donc exclues de l'entraînement, listées dans
+[`training/validation_pages.txt`](training/validation_pages.txt) et passées à
+`ketos` via `-e/--evaluation-data` :
 
-Pour un chiffre honnête, il faut réserver **des pages entières**, jamais des
-lignes tirées au hasard, et les passer via `--evaluation-data`.
+| Page | Position dans le corpus |
+|---|---|
+| `1_b` | 1ʳᵉ page sur 53 |
+| `33_a` | 14ᵉ |
+| `89_b` | 27ᵉ |
+| `145_a` | 40ᵉ |
+
+Soit 161 lignes, étalées du début à la fin de la matrice. `--val-pages N` change
+le nombre de pages réservées, `--reset-val-pages` recalcule la liste.
+
+> **Ces quatre pages doivent être transcrites comme les autres.** Elles ne servent
+> pas à l'entraînement, mais sans transcription la validation n'a rien à mesurer :
+> le script refuse alors de démarrer. Si la saisie doit être priorisée, c'est sur
+> celles-là.
+
+Une fois la liste écrite, **ne la modifiez plus**. Elle est versionnée pour cette
+raison : changer les pages réservées entre deux entraînements rendrait leurs
+précisions incomparables, et une page passée par l'entraînement ne peut plus
+servir à valider quoi que ce soit.
 
 ---
 

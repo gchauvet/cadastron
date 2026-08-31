@@ -138,7 +138,9 @@ python training/eval_model.py --device cuda:0 --model training/models/cadastre/b
 
 > **[ENTRAINEMENT.md](ENTRAINEMENT.md)** — ce que mesure réellement chaque étape,
 > et deux décisions à prendre avant de lancer la saisie : l'étendue de
-> l'échantillon transcrit, et la façon de réserver un jeu de validation honnête.
+> l'échantillon transcrit (53 pages étalées sur tout le volume) et le jeu de
+> validation (quatre pages entières mises de côté, jamais des lignes tirées au
+> hasard).
 
 `ketos` écrit ses sorties dans le **répertoire** `training/models/cadastre/` : un
 `checkpoint_<époque>-<précision>.ckpt` par époque, et le meilleur modèle sous la

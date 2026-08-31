@@ -1,0 +1,8 @@
+# Pages entieres reservees a la validation du fine-tuning.
+# Elles sont exclues de l'entrainement : ne pas modifier cette liste
+# apres un premier entrainement, sous peine de rendre les precisions
+# obtenues incomparables entre elles.
+1_b
+33_a
+89_b
+145_a

@@ -166,4 +166,6 @@ python training/prepare_finetune.py --status
 
 Les fichiers `.gt.txt` déjà remplis ne sont jamais écrasés ; le script peut être relancé après chaque nouveau passage du pipeline. Comptez quelques centaines de lignes transcrites avant de lancer le fine-tuning (voir [README.md](README.md#entraînement-du-modèle)).
 
+Quatre pages — `1_b`, `33_a`, `89_b`, `145_a` — sont réservées à la validation du modèle et exclues de son entraînement (voir [`training/validation_pages.txt`](training/validation_pages.txt)). Elles se transcrivent exactement comme les autres, mais sans elles la précision affichée ne mesurerait rien : si la saisie doit être priorisée, c'est sur celles-là. Leurs fichiers commencent par ces préfixes.
+
 Un défaut d'image **systématique** — voile, contraste faible sur toute une série de scans — relève de `cadastron/preprocess.py`, où il s'applique de la même façon à l'entraînement et à la reconnaissance. C'est la seule retouche légitime : celle qui vaut aussi pour les pages que le modèle lira plus tard. Une correction apportée à un rognage isolé, elle, ne survivrait pas — les images de `cadastre_gt` sont des liens physiques vers `output/lines/` et ne sont pas versionnées, donc invisible pour tout le monde et impossible à reproduire.
