@@ -122,7 +122,16 @@ def main() -> None:
     parser.add_argument("--seg-model", default=None, help="chemin vers un modele de segmentation Kraken (.mlmodel)")
     parser.add_argument("--rec-model", default=None, help="chemin vers un modele de reconnaissance Kraken (.mlmodel)")
     parser.add_argument("--limit", type=int, default=None, help="ne traiter que les N premiers scans (tests)")
+    parser.add_argument(
+        "--stride",
+        type=int,
+        default=None,
+        help="ne traiter qu'un scan sur N, etale sur tout le volume (echantillonnage)",
+    )
     args = parser.parse_args()
+
+    if args.stride is not None and args.stride < 1:
+        parser.error("--stride doit valoir au moins 1")
 
     images_dir = Path(args.images_dir)
     lines_dir = Path(args.lines_dir)
@@ -130,13 +139,24 @@ def main() -> None:
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
     scans = list_scans(images_dir)
+    available = len(scans)
+    # L'echantillonnage precede le plafonnement : --stride choisit OU regarder
+    # dans le volume, --limit combien en prendre. Un modele entrainé sur des
+    # scans voisins n'apprend qu'une main et une encre ; l'etalement compte
+    # davantage que le nombre de lignes.
+    if args.stride and args.stride > 1:
+        scans = scans[:: args.stride]
     if args.limit:
         scans = scans[: args.limit]
-    log.info("%d scans trouves dans %s", len(scans), images_dir)
+    if len(scans) == available:
+        log.info("%d scans trouves dans %s", available, images_dir)
+    else:
+        log.info("%d scans sur %d retenus dans %s", len(scans), available, images_dir)
 
     doc = new_document()
     sheets_written = 0
     skipped: list[str] = []
+    failed: list[str] = []
 
     for scan_path in scans:
         log.info("Traitement de %s", scan_path.name)
@@ -152,8 +172,12 @@ def main() -> None:
             try:
                 rows = process_page(page_img, sheet_name, lines_dir, args.seg_model, args.rec_model)
             except RuntimeError as exc:
+                # Une page en echec ne doit pas emporter le traitement : sur un
+                # volume entier, abandonner ici perdait aussi le classeur, qui
+                # n'est ecrit qu'a la toute fin.
                 log.error("%s: %s", sheet_name, exc)
-                return
+                failed.append(sheet_name)
+                continue
             if rows is None:
                 log.warning("%s: grille du tableau non reconnue, page ignoree", sheet_name)
                 skipped.append(sheet_name)
@@ -166,6 +190,8 @@ def main() -> None:
     if skipped:
         log.warning("%d pages ignorees (grille non reconnue): %s",
                     len(skipped), ", ".join(skipped))
+    if failed:
+        log.error("%d pages en erreur: %s", len(failed), ", ".join(failed))
 
 
 if __name__ == "__main__":

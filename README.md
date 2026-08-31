@@ -82,6 +82,10 @@ python -m cadastron.pipeline --images-dir images --output output/cadastron.ods
 # Test rapide sur les 2 premiers scans
 python -m cadastron.pipeline --limit 2
 
+# Echantillon etale sur tout le volume : un scan sur 8 (constitution du corpus
+# d'entrainement -- voir ENTRAINEMENT.md)
+python -m cadastron.pipeline --stride 8
+
 # Avec un modèle de reconnaissance
 python -m cadastron.pipeline --rec-model "$(python training/base_model.py)"
 ```
@@ -111,11 +115,14 @@ Le projet visait d'abord un modèle de base entraîné sur le [corpus TIMEUS](ht
 ### Procédure
 
 ```bash
-# 1. Extraire les lignes du cadastre
-python -m cadastron.pipeline
+# 1. Extraire les lignes du cadastre (--stride 8 : un scan sur 8, étalé sur
+#    tout le volume, pour couvrir plusieurs mains plutôt qu'une seule)
+python -m cadastron.pipeline --stride 8
 
 # 2. Rassembler les lignes et créer les fichiers de transcription vides
-python training/prepare_finetune.py
+#    (--lines-per-page plafonne le lot remis aux bénévoles, en prélevant sur
+#    toute la hauteur de chaque page et non seulement en haut)
+python training/prepare_finetune.py --lines-per-page 40
 
 # 3. Transcrire à la main les lignes dans training/cadastre_gt/*.gt.txt
 #    (voir TRANSCRIPTION.md pour les regles, puis suivre l'avancement)

@@ -20,6 +20,7 @@ Conventions de transcription :
 
 Usage:
     python training/prepare_finetune.py
+    python training/prepare_finetune.py --lines-per-page 40
     python training/prepare_finetune.py --status
 """
 from __future__ import annotations
@@ -44,16 +45,34 @@ def link_or_copy(src: Path, dst: Path) -> None:
         shutil.copy2(src, dst)
 
 
-def collect() -> tuple[int, int]:
+def select_spread(paths: list[Path], cap: int | None) -> list[Path]:
+    """Au plus `cap` lignes, reparties sur toute la hauteur de la page.
+
+    Les noms de fichiers commencent par le numero de ligne du tableau, donc la
+    liste triee suit la page de haut en bas : prendre les `cap` premieres ne
+    donnerait que le haut du tableau, bloc d'en-tete imprime compris. Un pas
+    regulier echantillonne au contraire toutes les hauteurs, et reste
+    deterministe -- relancer le script avec le meme plafond redonne exactement
+    la meme selection.
+    """
+    if cap is None or cap <= 0 or len(paths) <= cap:
+        return paths
+    step = len(paths) / cap
+    return [paths[int(i * step)] for i in range(cap)]
+
+
+def collect(lines_per_page: int | None = None) -> tuple[int, int, int]:
     """Rassemble les lignes et cree les .gt.txt manquants.
 
-    Renvoie (nombre de lignes total, nombre de .gt.txt crees).
+    Renvoie (nombre de lignes retenues, nombre de .gt.txt crees, pages vues).
     """
     GT_DIR.mkdir(parents=True, exist_ok=True)
     total = 0
     created = 0
+    pages = 0
     for sheet_dir in sorted(p for p in LINES_DIR.iterdir() if p.is_dir()):
-        for png in sorted(sheet_dir.glob("*.png")):
+        pages += 1
+        for png in select_spread(sorted(sheet_dir.glob("*.png")), lines_per_page):
             # Prefixe par la page pour eviter les collisions entre onglets.
             dst = GT_DIR / f"{sheet_dir.name}__{png.name}"
             link_or_copy(png, dst)
@@ -62,7 +81,7 @@ def collect() -> tuple[int, int]:
                 gt.write_text("", encoding="utf-8")
                 created += 1
             total += 1
-    return total, created
+    return total, created, pages
 
 
 def status() -> tuple[int, int]:
@@ -87,7 +106,17 @@ def main() -> None:
         action="store_true",
         help="affiche seulement l'avancement de la transcription",
     )
+    parser.add_argument(
+        "--lines-per-page",
+        type=int,
+        default=None,
+        help="ne retenir que N lignes par page, reparties sur toute sa hauteur "
+        "(defaut: toutes)",
+    )
     args = parser.parse_args()
+
+    if args.lines_per_page is not None and args.lines_per_page < 1:
+        parser.error("--lines-per-page doit valoir au moins 1")
 
     if not args.status:
         if not LINES_DIR.exists():
@@ -95,8 +124,8 @@ def main() -> None:
                 f"{LINES_DIR} est introuvable. Lancez d'abord le pipeline "
                 "(python -m cadastron.pipeline) pour extraire les lignes."
             )
-        total, created = collect()
-        print(f"{total} lignes rassemblees dans {GT_DIR}")
+        total, created, pages = collect(args.lines_per_page)
+        print(f"{total} lignes rassemblees dans {GT_DIR} ({pages} pages)")
         print(f"{created} fichiers .gt.txt vides crees")
 
     filled, total = status()

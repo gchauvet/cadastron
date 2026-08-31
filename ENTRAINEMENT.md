@@ -83,12 +83,39 @@ Le principe est constant en apprentissage automatique :
 Ordre de grandeur visé : **1500 à 2000 lignes transcrites, réparties sur 40 à 60
 pages** prises dans toute l'étendue de la matrice (scans ~2 à ~200).
 
-Le pipeline traité sans `--limit` produirait environ 40 000 rognages, bien plus
-que ce que des bénévoles peuvent absorber. Il manque donc une **option
-d'échantillonnage** (un pas entre les scans, ou une liste explicite) pour
-produire un lot étalé et de taille raisonnable. C'est le point qui coûte le plus
-cher à rattraper après coup : si la saisie démarre sur les sept pages actuelles,
-le travail est concentré au mauvais endroit.
+Le pipeline lancé sans option produirait environ 40 000 rognages, bien plus que
+ce que des bénévoles peuvent absorber. D'où l'option d'échantillonnage :
+
+```bash
+python -m cadastron.pipeline --stride 8
+```
+
+`--stride N` ne traite qu'un scan sur N, **étalé sur tout le volume**. Sur 384
+scans, un pas de 8 en retient 48, soit 96 pages, dont une cinquantaine de
+matrice une fois écartés les autres formulaires — réparties du début à la fin du
+registre, donc plusieurs mains et plusieurs états de conservation.
+
+`--stride` choisit *où* regarder dans le volume, `--limit` *combien* en prendre ;
+les deux se combinent, l'échantillonnage s'appliquant en premier.
+
+À raison d'environ 200 rognages par page, cela fait tout de même un lot de
+l'ordre de 10 000 lignes — le pipeline découpe tout, puisque l'ODS a besoin de
+toutes les cellules. Le plafond se pose donc à l'étape suivante, au moment de
+constituer le dossier remis aux bénévoles :
+
+```bash
+python training/prepare_finetune.py --lines-per-page 40
+```
+
+`--lines-per-page N` ne recopie que N lignes par page, **réparties sur toute la
+hauteur de la page** et non les N premières : les noms de fichiers commencent par
+le numéro de ligne du tableau, si bien que les premières sont toujours le bloc
+d'en-tête imprimé. Sur 45 pages de matrice, un plafond de 40 donne ≈ 1 800
+lignes — la cible ci-dessus — dans un dossier consultable de bout en bout.
+
+La sélection est déterministe : relancer le script avec le même plafond redonne
+exactement les mêmes fichiers, et le relancer avec un plafond plus élevé ajoute
+des lignes sans jamais toucher aux transcriptions déjà saisies.
 
 ### La précision annoncée par `ketos` sera optimiste
 
