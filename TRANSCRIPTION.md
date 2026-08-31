@@ -99,6 +99,24 @@ C'est le piège le plus fréquent, parce que ces images arrivent en premier dans
 
 ---
 
+## Taches, ratures et gribouillis
+
+Le registre a deux cents ans. Il porte des taches d'encre, des ratures, des repentirs du clerc, des passages où le papier a bu. C'est normal, et **ce n'est pas un défaut de l'image**.
+
+Devant une image un peu sale, on est tenté de la nettoyer avant de la transcrire. **Ne le faites pas.** L'ordinateur devra lire de vraies pages, taches comprises — c'est précisément sur ces lignes-là qu'il apprend à ne pas confondre une éclaboussure avec une lettre. Une image nettoyée lui enseigne un registre qui n'existe pas, et le laisse démuni devant le vrai.
+
+Une ligne abîmée mais lisible est donc un **excellent** exemple, l'un des plus utiles que vous puissiez donner. Tout se joue dans le fichier texte, jamais sur l'image :
+
+| Ce que vous voyez | Ce que vous faites |
+|---|---|
+| La tache gêne, mais vous lisez la ligne | Tapez ce que vous lisez, sans toucher à l'image |
+| La tache cache des lettres | Laissez le fichier vide |
+| Vous devinez les lettres cachées grâce aux lignes voisines | Laissez le fichier vide |
+
+Le dernier cas mérite qu'on s'y arrête, car il part d'une bonne intention. Reconstituer un mot d'après la ligne du dessus, c'est taper des lettres dont l'encre n'est pas sur l'image : on apprend alors à l'ordinateur à inventer du texte là où il n'y en a pas. C'est le pire service qu'on puisse lui rendre — bien pire qu'une case laissée vide.
+
+---
+
 ## Le signe « même chose »
 
 <img src="repetita.png" alt="Signe ditto manuscrit, en forme de barre oblique" height="60">
@@ -122,6 +140,7 @@ Sur la dernière ligne, le premier `/` vaut « La Pommeray » et le second vaut 
 ## En pratique
 
 - **Ne renommez ni ne déplacez aucun fichier.** L'image et son fichier texte sont appariés par leur nom : le moindre changement casse le lien entre les deux.
+- **Ne modifiez jamais les images.** Elles doivent rester exactement telles que l'ordinateur les a découpées. Si l'une d'elles vous paraît vraiment inutilisable, laissez son fichier texte vide et signalez-la au coordinateur, plutôt que de la retoucher.
 - **Une seule ligne de texte par fichier**, sans retour à la ligne. Si vous avez besoin d'appuyer sur Entrée, c'est probablement que l'image contient deux lignes — auquel cas laissez-la vide.
 - **Enregistrez en UTF-8.** C'est indispensable pour que les accents soient conservés. Dans le Bloc-notes de Windows : `Fichier` → `Enregistrer sous`, puis choisissez `UTF-8` dans la liste « Encodage », en bas de la fenêtre.
 - **Inutile de tout faire d'un coup.** Vous pouvez vous arrêter à n'importe quel moment : les fichiers déjà remplis sont conservés, ceux qui restent vides seront repris plus tard.
@@ -146,3 +165,5 @@ python training/prepare_finetune.py --status
 ```
 
 Les fichiers `.gt.txt` déjà remplis ne sont jamais écrasés ; le script peut être relancé après chaque nouveau passage du pipeline. Comptez quelques centaines de lignes transcrites avant de lancer le fine-tuning (voir [README.md](README.md#entraînement-du-modèle)).
+
+Un défaut d'image **systématique** — voile, contraste faible sur toute une série de scans — relève de `cadastron/preprocess.py`, où il s'applique de la même façon à l'entraînement et à la reconnaissance. C'est la seule retouche légitime : celle qui vaut aussi pour les pages que le modèle lira plus tard. Une correction apportée à un rognage isolé, elle, ne survivrait pas — les images de `cadastre_gt` sont des liens physiques vers `output/lines/` et ne sont pas versionnées, donc invisible pour tout le monde et impossible à reproduire.
